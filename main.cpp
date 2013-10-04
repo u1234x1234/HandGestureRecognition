@@ -1,27 +1,3 @@
-/****************************************************************************
-*                                                                           *
-*  OpenNI 1.x Alpha                                                         *
-*  Copyright (C) 2011 PrimeSense Ltd.                                       *
-*                                                                           *
-*  This file is part of OpenNI.                                             *
-*                                                                           *
-*  OpenNI is free software: you can redistribute it and/or modify           *
-*  it under the terms of the GNU Lesser General Public License as published *
-*  by the Free Software Foundation, either version 3 of the License, or     *
-*  (at your option) any later version.                                      *
-*                                                                           *
-*  OpenNI is distributed in the hope that it will be useful,                *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of           *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the             *
-*  GNU Lesser General Public License for more details.                      *
-*                                                                           *
-*  You should have received a copy of the GNU Lesser General Public License *
-*  along with OpenNI. If not, see <http://www.gnu.org/licenses/>.           *
-*                                                                           *
-****************************************************************************/
-//---------------------------------------------------------------------------
-// Includes
-//---------------------------------------------------------------------------
 #include <XnOpenNI.h>
 #include <XnCodecIDs.h>
 #include <XnCppWrapper.h>
@@ -56,27 +32,7 @@ XnBool g_bDrawSkeleton = TRUE;
 XnBool g_bPrintID = TRUE;
 XnBool g_bPrintState = TRUE;
 
-XnBool g_bPrintFrameID = FALSE;
-XnBool g_bMarkJoints = FALSE;
-
-#ifndef USE_GLES
-#if (XN_PLATFORM == XN_PLATFORM_MACOSX)
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
-#else
-#include "opengles.h"
-#endif
-
-#ifdef USE_GLES
-static EGLDisplay display = EGL_NO_DISPLAY;
-static EGLSurface surface = EGL_NO_SURFACE;
-static EGLContext context = EGL_NO_CONTEXT;
-#endif
-
-#define GL_WIN_SIZE_X 720
-#define GL_WIN_SIZE_Y 480
+XnBool g_bMarkJoints = TRUE;
 
 XnBool g_bPause = false;
 XnBool g_bRecord = false;
@@ -169,71 +125,13 @@ void XN_CALLBACK_TYPE UserCalibration_CalibrationComplete(xn::SkeletonCapability
 	}
 }
 
-#define XN_CALIBRATION_FILE_NAME "UserCalibration.bin"
-
-// Save calibration to file
-void SaveCalibration()
-{
-	XnUserID aUserIDs[20] = {0};
-	XnUInt16 nUsers = 20;
-	g_UserGenerator.GetUsers(aUserIDs, nUsers);
-	for (int i = 0; i < nUsers; ++i)
-	{
-		// Find a user who is already calibrated
-		if (g_UserGenerator.GetSkeletonCap().IsCalibrated(aUserIDs[i]))
-		{
-			// Save user's calibration to file
-			g_UserGenerator.GetSkeletonCap().SaveCalibrationDataToFile(aUserIDs[i], XN_CALIBRATION_FILE_NAME);
-			break;
-		}
-	}
-}
-// Load calibration from file
-void LoadCalibration()
-{
-	XnUserID aUserIDs[20] = {0};
-	XnUInt16 nUsers = 20;
-	g_UserGenerator.GetUsers(aUserIDs, nUsers);
-	for (int i = 0; i < nUsers; ++i)
-	{
-		// Find a user who isn't calibrated or currently in pose
-		if (g_UserGenerator.GetSkeletonCap().IsCalibrated(aUserIDs[i])) continue;
-		if (g_UserGenerator.GetSkeletonCap().IsCalibrating(aUserIDs[i])) continue;
-
-		// Load user's calibration from file
-		XnStatus rc = g_UserGenerator.GetSkeletonCap().LoadCalibrationDataFromFile(aUserIDs[i], XN_CALIBRATION_FILE_NAME);
-		if (rc == XN_STATUS_OK)
-		{
-			// Make sure state is coherent
-			g_UserGenerator.GetPoseDetectionCap().StopPoseDetection(aUserIDs[i]);
-			g_UserGenerator.GetSkeletonCap().StartTracking(aUserIDs[i]);
-		}
-		break;
-	}
-}
-
 // this function is called each frame
 void glutDisplay (void)
 {
-
-	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// Setup the OpenGL viewpoint
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
 	g_DepthGenerator.GetAlternativeViewPointCap().SetViewPoint(g_ImageGenerator);
 
 	xn::SceneMetaData sceneMD;
 	xn::DepthMetaData depthMD;
-	g_DepthGenerator.GetMetaData(depthMD);
-#ifndef USE_GLES
-	glOrtho(0, depthMD.XRes(), depthMD.YRes(), 0, -1.0, 1.0);
-#else
-	glOrthof(0, depthMD.XRes(), depthMD.YRes(), 0, -1.0, 1.0);
-#endif
-
-	glDisable(GL_TEXTURE_2D);
 	if (!g_bPause)
 	{
 		// Read next available data
@@ -248,104 +146,7 @@ void glutDisplay (void)
 	g_ImageGenerator.GetMetaData(ImageMD);
 
 	DrawDepthMap(depthMD, sceneMD, ImageMD);
-	/////////////////////////////////////////////////////////////////////////////////////////////
-	/*
-		const XnDepthPixel* g_Depth = depthMD.Data();
-		cv::Mat DepthBuf(480,640,CV_16UC1,(unsigned char*)g_Depth);
-
-		fileName.str("");
-		fileName << ++nFiles;
-		cv::imwrite("samples/"+fileName.str()+".png", DepthBuf );
-
-		*/
-	//DepthBuf.convertTo(DepthBuf, CV_8UC1, 2.0f);
-	//cv::imshow("123", DepthBuf);
-
-
-	//record << ImgBuf2;
-
-
-#ifndef USE_GLES
-	glutSwapBuffers();
-#endif
 }
-
-#ifndef USE_GLES
-void glutIdle (void)
-{
-	if (g_bQuit) {
-		CleanupExit();
-	}
-
-	// Display the frame
-	glutPostRedisplay();
-}
-
-void glutKeyboard (unsigned char key, int /*x*/, int /*y*/)
-{
-	switch (key)
-	{
-	case 27:
-		CleanupExit();
-	case 'b':
-		// Draw background?
-		g_bDrawBackground = !g_bDrawBackground;
-		break;
-	case 'x':
-		// Draw pixels at all?
-		g_bDrawPixels = !g_bDrawPixels;
-		break;
-	case 's':
-		// Draw Skeleton?
-		g_bDrawSkeleton = !g_bDrawSkeleton;
-		break;
-	case 'i':
-		// Print label?
-		g_bPrintID = !g_bPrintID;
-		break;
-	case 'l':
-		// Print ID & state as label, or only ID?
-		g_bPrintState = !g_bPrintState;
-		break;
-	case 'f':
-		// Print FrameID
-		g_bPrintFrameID = !g_bPrintFrameID;
-		break;
-	case 'j':
-		// Mark joints
-		g_bMarkJoints = !g_bMarkJoints;
-		break;
-	case'p':
-		g_bPause = !g_bPause;
-		break;
-	case 'S':
-		SaveCalibration();
-		break;
-	case 'L':
-		LoadCalibration();
-		break;
-	}
-}
-void glInit (int * pargc, char ** argv)
-{
-	glutInit(pargc, argv);
-	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-	glutInitWindowSize(GL_WIN_SIZE_X, GL_WIN_SIZE_Y);
-	glutCreateWindow ("User Tracker Viewer");
-	//glutFullScreen();
-	glutSetCursor(GLUT_CURSOR_NONE);
-
-	glutKeyboardFunc(glutKeyboard);
-	glutDisplayFunc(glutDisplay);
-	glutIdleFunc(glutIdle);
-
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
-}
-#endif // USE_GLES
 
 #define SAMPLE_XML_PATH "../HandGestureRecognition/config/SamplesConfig.xml"
 
@@ -396,7 +197,7 @@ int main(int argc, char **argv)
 
 	nRetVal = g_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_DepthGenerator);
 	g_Context.FindExistingNode(XN_NODE_TYPE_IMAGE, g_ImageGenerator);
-	/*    if (nRetVal != XN_STATUS_OK)
+	if (nRetVal != XN_STATUS_OK)
 	{
 		printf("No depth generator found. Using a default one...");
 		xn::MockDepthGenerator mockDepth;
@@ -426,7 +227,7 @@ int main(int argc, char **argv)
 
 		g_DepthGenerator = mockDepth;
 	}
-*/
+
 	nRetVal = g_Context.FindExistingNode(XN_NODE_TYPE_USER, g_UserGenerator);
 	if (nRetVal != XN_STATUS_OK)
 	{
@@ -471,28 +272,8 @@ int main(int argc, char **argv)
 	nRetVal = g_Context.StartGeneratingAll();
 	CHECK_RC(nRetVal, "StartGenerating");
 
-#ifndef USE_GLES
-	glInit(&argc, argv);
-	glutMainLoop();
-#else
-	if (!opengles_init(GL_WIN_SIZE_X, GL_WIN_SIZE_Y, &display, &surface, &context))
-	{
-		printf("Error initializing opengles\n");
-		CleanupExit();
-	}
-
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
-
 	while (!g_bQuit)
 	{
 		glutDisplay();
-		eglSwapBuffers(display, surface);
 	}
-	opengles_shutdown(display, surface, context);
-
-	CleanupExit();
-#endif
 }

@@ -1,27 +1,3 @@
-/****************************************************************************
-*                                                                           *
-*  OpenNI 1.x Alpha                                                         *
-*  Copyright (C) 2011 PrimeSense Ltd.                                       *
-*                                                                           *
-*  This file is part of OpenNI.                                             *
-*                                                                           *
-*  OpenNI is free software: you can redistribute it and/or modify           *
-*  it under the terms of the GNU Lesser General Public License as published *
-*  by the Free Software Foundation, either version 3 of the License, or     *
-*  (at your option) any later version.                                      *
-*                                                                           *
-*  OpenNI is distributed in the hope that it will be useful,                *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of           *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the             *
-*  GNU Lesser General Public License for more details.                      *
-*                                                                           *
-*  You should have received a copy of the GNU Lesser General Public License *
-*  along with OpenNI. If not, see <http://www.gnu.org/licenses/>.           *
-*                                                                           *
-****************************************************************************/
-//---------------------------------------------------------------------------
-// Includes
-//---------------------------------------------------------------------------
 #include <math.h>
 #include <queue>
 #include <deque>
@@ -30,15 +6,7 @@
 #include <opencv2/opencv.hpp>
 #include <fstream>
 #include <time.h>
-#ifndef USE_GLES
-#if (XN_PLATFORM == XN_PLATFORM_MACOSX)
-	#include <GLUT/glut.h>
-#else
-	#include <GL/glut.h>
-#endif
-#else
-	#include "opengles.h"
-#endif
+
 using namespace std;
 using namespace cv;
 extern ofstream out;
@@ -61,22 +29,22 @@ extern XnBool g_bDrawPixels;
 extern XnBool g_bDrawSkeleton;
 extern XnBool g_bPrintID;
 extern XnBool g_bPrintState;
-
+Mat ImgBuf;
 extern XnBool g_bPrintFrameID;
 extern XnBool g_bMarkJoints;
 HOGDescriptor hog(
-		 Size(64,64), //winSize
-		 Size(16,16), //blocksize
-		 Size(8,8), //blockStride,
-		 Size(8,8), //cellSize,
-		 9,  //nbins,
-		 0,  //derivAper,
-		 -1,  //winSigma,
-		 0,  //histogramNormType,
-		 0.2,  //L2HysThresh,
-		 0  //gammal correction,
-				 //nlevels=64
-		 );
+		Size(64,64), //winSize
+		Size(16,16), //blocksize
+		Size(8,8), //blockStride,
+		Size(8,8), //cellSize,
+		9,  //nbins,
+		0,  //derivAper,
+		-1,  //winSigma,
+		0,  //histogramNormType,
+		0.2,  //L2HysThresh,
+		0  //gammal correction,
+		//nlevels=64
+		);
 deque<vector<float> > de;
 deque<vector<float> > de2;
 #include <map>
@@ -90,79 +58,10 @@ void XN_CALLBACK_TYPE MyPoseInProgress(xn::PoseDetectionCapability& /*capability
 	m_Errors[id].second = poseError;
 }
 
-unsigned int getClosestPowerOfTwo(unsigned int n)
-{
-	unsigned int m = 2;
-	while(m < n) m<<=1;
-
-	return m;
-}
-GLuint initTexture(void** buf, int& width, int& height)
-{
-	GLuint texID = 0;
-	glGenTextures(1,&texID);
-
-	width = getClosestPowerOfTwo(width);
-	height = getClosestPowerOfTwo(height); 
-	*buf = new unsigned char[width*height*4];
-	glBindTexture(GL_TEXTURE_2D,texID);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	return texID;
-}
-
-GLfloat texcoords[8];
 void DrawRectangle(float topLeftX, float topLeftY, float bottomRightX, float bottomRightY)
 {
-	GLfloat verts[8] = {	topLeftX, topLeftY,
-		topLeftX, bottomRightY,
-		bottomRightX, bottomRightY,
-		bottomRightX, topLeftY
-	};
-	glVertexPointer(2, GL_FLOAT, 0, verts);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-	//TODO: Maybe glFinish needed here instead - if there's some bad graphics crap
-	glFlush();
+	cv::rectangle(ImgBuf, Point(topLeftX, topLeftY), Point(bottomRightX, bottomRightY), Scalar(100, 0, 0));
 }
-void DrawTexture(float topLeftX, float topLeftY, float bottomRightX, float bottomRightY)
-{
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
-
-	DrawRectangle(topLeftX, topLeftY, bottomRightX, bottomRightY);
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-}
-
-XnFloat Colors[][3] =
-{
-	{0,1,1},
-	{0,0,1},
-	{0,1,0},
-	{1,1,0},
-	{1,0,0},
-	{1,.5,0},
-	{.5,1,0},
-	{0,.5,1},
-	{.5,0,1},
-	{1,1,.5},
-	{1,1,1}
-};
-XnUInt32 nColors = 10;
-#ifndef USE_GLES
-void glPrintString(void *font, char *str)
-{
-	int i,l = (int)strlen(str);
-
-	for(i=0; i<l; i++)
-	{
-		glutBitmapCharacter(font,*str++);
-	}
-}
-#endif
 bool DrawLimb(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2)
 {
 	if (!g_UserGenerator.GetSkeletonCap().IsTracking(player))
@@ -172,7 +71,7 @@ bool DrawLimb(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2)
 	}
 
 	if (!g_UserGenerator.GetSkeletonCap().IsJointActive(eJoint1) ||
-		!g_UserGenerator.GetSkeletonCap().IsJointActive(eJoint2))
+			!g_UserGenerator.GetSkeletonCap().IsJointActive(eJoint2))
 	{
 		return false;
 	}
@@ -191,32 +90,12 @@ bool DrawLimb(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2)
 	pt[1] = joint2.position;
 
 	g_DepthGenerator.ConvertRealWorldToProjective(2, pt, pt);
-#ifndef USE_GLES
-	glVertex3i(pt[0].X, pt[0].Y, 0);
-	glVertex3i(pt[1].X, pt[1].Y, 0);
-#else
-	GLfloat verts[4] = {pt[0].X, pt[0].Y, pt[1].X, pt[1].Y};
-	glVertexPointer(2, GL_FLOAT, 0, verts);
-	glDrawArrays(GL_LINES, 0, 2);
-	glFlush();
-#endif
-
+	line(ImgBuf, Point(pt[0].X, pt[0].Y), Point(pt[1].X, pt[1].Y), Scalar(255, 255, 0));
 	return true;
-}
-
-static const float DEG2RAD = 3.14159/180;
- 
+} 
 void drawCircle(float x, float y, float radius)
 {
-   glBegin(GL_TRIANGLE_FAN);
- 
-   for (int i=0; i < 360; i++)
-   {
-      float degInRad = i*DEG2RAD;
-      glVertex2f(x + cos(degInRad)*radius, y + sin(degInRad)*radius);
-   }
- 
-   glEnd();
+	circle(ImgBuf, Point(x, y), radius, Scalar(255, 255, 0));
 }
 void DrawJoint(XnUserID player, XnSkeletonJoint eJoint)
 {
@@ -291,6 +170,21 @@ const XnChar* GetPoseErrorString(XnPoseDetectionStatus error)
 		return "Unknown";
 	}
 }
+XnFloat Colors[][3] =
+{
+	{0,1,1},
+	{0,0,1},
+	{0,1,0},
+	{1,1,0},
+	{1,0,0},
+	{1,.5,0},
+	{.5,1,0},
+	{0,.5,1},
+	{.5,0,1},
+	{1,1,.5},
+	{1,1,1}
+};
+XnUInt32 nColors = 10;
 void handSeparation2(const Mat &depth, int y, int x, const Mat& image)
 {
 	ix = x;
@@ -348,16 +242,16 @@ void handSeparation2(const Mat &depth, int y, int x, const Mat& image)
 	if ( xmax <= xmin || ymax <= ymin ) {return;}
 	Mat resImage;
 	depth.copyTo(resImage, flags);
-//	Mat resImage2 = resImage(Range(ymin, ymax), Range(xmin, xmax));
+	//	Mat resImage2 = resImage(Range(ymin, ymax), Range(xmin, xmax));
 
 	//resImage.convertTo(resImage, CV_8UC1, 3);
 	//cv::resize(resImage, resImage, Size(100, 100), 0, 0, INTER_CUBIC);
 	//cv::resize(resImage, resImage, Size(), 1.5, 1.5, INTER_CUBIC);
-//	blur(resImage, resImage, Size(3,3));
+	//	blur(resImage, resImage, Size(3,3));
 	resImage = resImage(Range(ymin, ymax), Range(xmin, xmax));
 	resImage *= 100;
 	resize(resImage, resImage, Size(64, 64));
-//	imshow("4341", resImage);
+	//	imshow("4341", resImage);
 
 	fileName.str("");
 	fileName << ++nFiles;
@@ -400,11 +294,11 @@ vector<int> rr;
 clock_t init, final;
 double diffclock( clock_t clock1, clock_t clock2 ) {
 
-		double diffticks = clock1 - clock2;
-		double diffms    = diffticks / ( CLOCKS_PER_SEC / 1000 );
+	double diffticks = clock1 - clock2;
+	double diffms    = diffticks / ( CLOCKS_PER_SEC / 1000 );
 
-		return diffms;
-	}
+	return diffms;
+}
 void handSeparation(const Mat &depth, int y, int x, const Mat& image)
 {
 	Mat g;
@@ -415,14 +309,14 @@ void handSeparation(const Mat &depth, int y, int x, const Mat& image)
 	final = clock();
 	//cout << diffclock(init, final);
 	if (fabs(diffclock(init, final)) <= 300)
-	for (int i = 0 ; i < rr.size(); i++)
-	{
-		ostringstream ot;
-		ot << rr[i] << ".jpg";
-		Mat ff = imread("../HandGestureRecognition/images/" + ot.str());
-		resize(ff, ff, Size(50, 100));
-		ff.copyTo(g(Rect(i*50 + 200, 0, ff.cols, ff.rows)));
-	}
+		for (int i = 0 ; i < rr.size(); i++)
+		{
+			ostringstream ot;
+			ot << rr[i] << ".jpg";
+			Mat ff = imread("../HandGestureRecognition/images/" + ot.str());
+			resize(ff, ff, Size(50, 100));
+			ff.copyTo(g(Rect(i*50 + 200, 0, ff.cols, ff.rows)));
+		}
 	else rr.clear();
 	imshow("qw", g);
 	queue<pair<int,int> > q;
@@ -477,12 +371,12 @@ void handSeparation(const Mat &depth, int y, int x, const Mat& image)
 	if ( xmax <= xmin || ymax <= ymin ) {return;}
 	Mat resImage;
 	depth.copyTo(resImage, flags);
-//	Mat resImage2 = resImage(Range(ymin, ymax), Range(xmin, xmax));
+	//	Mat resImage2 = resImage(Range(ymin, ymax), Range(xmin, xmax));
 
 	//resImage.convertTo(resImage, CV_8UC1, 3);
 	//cv::resize(resImage, resImage, Size(100, 100), 0, 0, INTER_CUBIC);
 	//cv::resize(resImage, resImage, Size(), 1.5, 1.5, INTER_CUBIC);
-//	blur(resImage, resImage, Size(3,3));
+	//	blur(resImage, resImage, Size(3,3));
 	resImage = resImage(Range(ymin, ymax), Range(xmin, xmax));
 	resImage *= 100;
 	resize(resImage, resImage, Size(64, 64));
@@ -490,7 +384,7 @@ void handSeparation(const Mat &depth, int y, int x, const Mat& image)
 
 	fileName.str("");
 	fileName << ++nFiles;
-//	cv::imwrite("samples/"+fileName.str()+".png", resImage );
+	//	cv::imwrite("samples/"+fileName.str()+".png", resImage );
 
 	imwrite("g.png", resImage);
 	Mat im = imread("g.png", CV_LOAD_IMAGE_GRAYSCALE);
@@ -565,8 +459,7 @@ void handSeparation(const Mat &depth, int y, int x, const Mat& image)
 }
 void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd, const xn::ImageMetaData& imd)
 {
-	static bool bInitialized = false;	
-	static GLuint depthTexID;
+	static bool bInitialized = false;
 	static unsigned char* pDepthTexBuf;
 	static int texWidth, texHeight;
 
@@ -579,13 +472,10 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd, co
 
 	if(!bInitialized)
 	{
-		texWidth =  getClosestPowerOfTwo(dmd.XRes());
-		texHeight = getClosestPowerOfTwo(dmd.YRes());
+		texWidth =  640;
+		texHeight = 480;
+		pDepthTexBuf = new unsigned char[texWidth*texHeight*3];
 
-//		printf("Initializing depth texture: width = %d, height = %d\n", texWidth, texHeight);
-		depthTexID = initTexture((void**)&pDepthTexBuf,texWidth, texHeight) ;
-
-//		printf("Initialized depth texture: width = %d, height = %d\n", texWidth, texHeight);
 		bInitialized = true;
 
 		topLeftX = dmd.XRes();
@@ -594,9 +484,6 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd, co
 		bottomRightX = 0;
 		texXpos =(float)dmd.XRes()/texWidth;
 		texYpos  =(float)dmd.YRes()/texHeight;
-
-		memset(texcoords, 0, 8*sizeof(float));
-		texcoords[0] = texXpos, texcoords[1] = texYpos, texcoords[2] = texXpos, texcoords[7] = texYpos;
 	}
 
 	unsigned int nValue = 0;
@@ -673,7 +560,7 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd, co
 					{
 						nHistValue = pDepthHist[nValue];
 
-						pDestImage[0] = nHistValue * Colors[nColorID][0]; 
+						pDestImage[0] = nHistValue * Colors[nColorID][0];
 						pDestImage[1] = nHistValue * Colors[nColorID][1];
 						pDestImage[2] = nHistValue * Colors[nColorID][2];
 					}
@@ -692,23 +579,13 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd, co
 		xnOSMemSet(pDepthTexBuf, 0, 3*2*g_nXRes*g_nYRes);
 	}
 
-	glBindTexture(GL_TEXTURE_2D, depthTexID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pDepthTexBuf);
-
-	// Display the OpenGL texture map
-	glColor4f(0.75,0.75,0.75,1);
-
-	glEnable(GL_TEXTURE_2D);
-	DrawTexture(dmd.XRes(),dmd.YRes(),0,0);	
-	glDisable(GL_TEXTURE_2D);
-
+	ImgBuf = Mat(texHeight, texWidth, CV_8UC3, pDepthTexBuf);
 	char strLabel[50] = "";
 	XnUserID aUsers[15];
 	XnUInt16 nUsers = 15;
 	g_UserGenerator.GetUsers(aUsers, nUsers);
 	for (int i = 0; i < nUsers; ++i)
 	{
-#ifndef USE_GLES
 		if (g_bPrintID)
 		{
 			XnPoint3D com;
@@ -739,16 +616,10 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd, co
 				xnOSStrFormat(strLabel, sizeof(strLabel), &nDummy, "%d - Looking for pose [%s]", aUsers[i], GetPoseErrorString(m_Errors[aUsers[i]].second));
 			}
 
-
-			glColor4f(1-Colors[i%nColors][0], 1-Colors[i%nColors][1], 1-Colors[i%nColors][2], 1);
-
-			glRasterPos2i(com.X, com.Y);
-			glPrintString(GLUT_BITMAP_HELVETICA_18, strLabel);
+			putText(ImgBuf, strLabel, Point(com.X, com.Y), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200,200,250), 1, CV_AA);
 		}
-#endif
 		if (g_bDrawSkeleton && g_UserGenerator.GetSkeletonCap().IsTracking(aUsers[i]))
 		{
-			glColor4f(1-Colors[aUsers[i]%nColors][0], 1-Colors[aUsers[i]%nColors][1], 1-Colors[aUsers[i]%nColors][2], 1);
 			// getting information from depthmap
 
 			if (g_UserGenerator.GetSkeletonCap().IsTracking(aUsers[i]) &&  g_UserGenerator.GetSkeletonCap().IsJointActive(XN_SKEL_LEFT_HAND))
@@ -859,10 +730,6 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd, co
 				DrawJoint(aUsers[i], XN_SKEL_RIGHT_FOOT);
 			}
 
-#ifndef USE_GLES
-			glBegin(GL_LINES);
-#endif
-
 			// Draw Limbs
 			DrawLimb(aUsers[i], XN_SKEL_HEAD, XN_SKEL_NECK);
 
@@ -903,23 +770,9 @@ void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd, co
 			DrawLimb(aUsers[i], XN_SKEL_RIGHT_KNEE, XN_SKEL_RIGHT_FOOT);
 
 			DrawLimb(aUsers[i], XN_SKEL_LEFT_HIP, XN_SKEL_RIGHT_HIP);
-#ifndef USE_GLES
-			glEnd();
-#endif
 		}
 	}
+	imshow("qwe", ImgBuf);
+	waitKey( 20 );
 
-	if (g_bPrintFrameID)
-	{
-		static XnChar strFrameID[80];
-		xnOSMemSet(strFrameID, 0, 80);
-		XnUInt32 nDummy = 0;
-		xnOSStrFormat(strFrameID, sizeof(strFrameID), &nDummy, "%d", dmd.FrameID());
-
-		glColor4f(1, 0, 0, 1);
-
-		glRasterPos2i(10, 10);
-
-		glPrintString(GLUT_BITMAP_HELVETICA_18, strFrameID);
-	}
 }
