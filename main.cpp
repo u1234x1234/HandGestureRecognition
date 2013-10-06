@@ -1,5 +1,4 @@
 #include <opencv2/opencv.hpp>
-#include <fstream>
 #include <OpenNIContext.h>
 using namespace std;
 using namespace cv;
@@ -22,6 +21,7 @@ int main(int argc, char **argv)
 
 	while (1)
 	{
+		context->update();
 		context->display();
 	}
 }

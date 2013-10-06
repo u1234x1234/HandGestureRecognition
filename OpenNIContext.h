@@ -12,6 +12,7 @@ public:
 	OpenNIContext(int, char**);
 	~OpenNIContext();
 	void display (void);
+	void update();
 private:
 	SceneDrawer *sceneDrawer;
 	xn::Context g_Context;

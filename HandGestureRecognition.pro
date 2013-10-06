@@ -7,11 +7,13 @@ INCLUDEPATH += /home/12341234/Downloads/OpenNI-Bin-Dev-Linux-x64-v1.5.4.0/Includ
 LIBS += -lopencv_video -lopencv_ml -lopencv_objdetect -lopencv_imgproc -lopencv_highgui -lopencv_core -lGL -lglut -lGLU -lGLEW -lOpenNI
 SOURCES += main.cpp \
     SceneDrawer.cpp \
-    OpenNIContext.cpp
+    OpenNIContext.cpp \
+    HandGestureRecognizer.cpp
 
 HEADERS += \
 	SceneDrawer.h \
-    OpenNIContext.h
+    OpenNIContext.h \
+    HandGestureRecognizer.h
 
 OTHER_FILES +=
 

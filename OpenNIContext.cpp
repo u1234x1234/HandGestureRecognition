@@ -137,12 +137,16 @@ void OpenNIContext::display()
 	g_DepthGenerator.GetAlternativeViewPointCap().SetViewPoint(g_ImageGenerator);
 	xn::SceneMetaData sceneMD;
 	xn::DepthMetaData depthMD;
-	// Read next available data
-	g_Context.WaitOneUpdateAll(g_UserGenerator);
 	// Process the data
 	g_DepthGenerator.GetMetaData(depthMD);
 	g_UserGenerator.GetUserPixels(0, sceneMD);
 	xn::ImageMetaData ImageMD;
 	g_ImageGenerator.GetMetaData(ImageMD);
 	sceneDrawer->DrawDepthMap(depthMD, sceneMD);
+}
+
+void OpenNIContext::update()
+{
+	// Read next available data
+	g_Context.WaitOneUpdateAll(g_UserGenerator);
 }
