@@ -15,12 +15,12 @@ public:
 	void update();
 private:
 	SceneDrawer *sceneDrawer;
-	xn::Context g_Context;
-	xn::ScriptNode g_scriptNode;
-	xn::DepthGenerator g_DepthGenerator;
-	xn::ImageGenerator g_ImageGenerator;
-	xn::UserGenerator g_UserGenerator;
-	xn::Player g_Player;
+	xn::Context context;
+	xn::ScriptNode scriptNode;
+	xn::DepthGenerator depthGenerator;
+	xn::ImageGenerator imageGenerator;
+	xn::UserGenerator userGenerator;
+	xn::Player player;
 };
 
 #endif // OPENNICONTEXT_H

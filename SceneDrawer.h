@@ -7,22 +7,25 @@
 class SceneDrawer{
 public:
 	SceneDrawer(const xn::UserGenerator&, const xn::DepthGenerator&);
-	void DrawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd);
+	void drawDepthMap(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd);
 private:
-	bool DrawLimb(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2);
+	bool drawLimb(XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2);
 	void drawCircle(float x, float y, float radius);
-	void DrawJoint(XnUserID player, XnSkeletonJoint eJoint);
-	const XnChar* GetCalibrationErrorString(XnCalibrationStatus error);
+	void drawJoint(XnUserID player, XnSkeletonJoint eJoint);
+	void printId(XnUserID);
+	void drawAllJoints(XnUserID);
+	void drawAllLimbs(XnUserID);
+	void depthMapCreating(unsigned char*, const xn::DepthMetaData&, const xn::SceneMetaData&);
+	const XnChar* getCalibrationErrorString(XnCalibrationStatus error);
 	const xn::UserGenerator userGenerator;
 	const xn::DepthGenerator depthGenerator;
-	XnBool g_bDrawBackground;
-	XnBool g_bDrawPixels;
-	XnBool g_bDrawSkeleton;
-	XnBool g_bPrintID;
-	XnBool g_bPrintState;
-	XnBool g_bPrintFrameID;
-	XnBool g_bMarkJoints;
-	cv::Mat ImgBuf;
+	XnBool drawBackground;
+	XnBool drawSkeleton;
+	XnBool printID;
+	XnBool printState;
+	XnBool printFrameID;
+	XnBool markJoints;
+	cv::Mat imgBuf;
 	const XnFloat Colors[11][3] =
 	{
 		{0,1,1},
@@ -38,6 +41,7 @@ private:
 		{1,1,1}
 	};
 	const XnUInt32 nColors = 10;
+	static const int Width = 640, Height = 480;
 };
 
 #endif
