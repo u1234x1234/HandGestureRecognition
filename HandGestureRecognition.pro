@@ -8,12 +8,14 @@ LIBS += -lopencv_video -lopencv_ml -lopencv_objdetect -lopencv_imgproc -lopencv_
 SOURCES += main.cpp \
     SceneDrawer.cpp \
     OpenNIContext.cpp \
-    HandGestureRecognizer.cpp
+    HandGestureRecognizer.cpp \
+    HandSeparator.cpp
 
 HEADERS += \
 	SceneDrawer.h \
     OpenNIContext.h \
-    HandGestureRecognizer.h
+    HandGestureRecognizer.h \
+    HandSeparator.h
 
 OTHER_FILES +=
 

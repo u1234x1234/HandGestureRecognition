@@ -150,3 +150,48 @@ void OpenNIContext::update()
 	// Read next available data
 	context.WaitOneUpdateAll(userGenerator);
 }
+
+void OpenNIContext::getImageMap(cv::Mat &image)
+{
+	xn::ImageMetaData ImageMD;
+	imageGenerator.GetMetaData(ImageMD);
+	const XnUInt8* img = ImageMD.Data();
+	cv::Mat imgBuf(480,640,CV_8UC3,(unsigned short*)img);
+	cv::cvtColor( imgBuf, image, CV_RGB2BGR );
+}
+
+void OpenNIContext::getHandsPositions(std::vector<std::pair<std::pair<int, int>, std::pair<int, int> > > &positions)
+{
+	XnUserID aUsers[15];
+	XnUInt16 nUsers = 15;
+	userGenerator.GetUsers(aUsers, nUsers);
+	XnSkeletonJoint hand[] = {XN_SKEL_LEFT_HAND, XN_SKEL_RIGHT_HAND};
+	for (int i = 0; i < nUsers; ++i)
+		if (userGenerator.GetSkeletonCap().IsTracking(aUsers[i]))
+		{
+			pair<pair<int, int>, pair<int, int> > position;
+			for (int j = 0; j < 2; j++)
+				if (userGenerator.GetSkeletonCap().IsJointActive(hand[j]))
+				{
+					XnSkeletonJointPosition joint;
+					userGenerator.GetSkeletonCap().GetSkeletonJointPosition(aUsers[i], hand[j], joint);
+					if (joint.fConfidence >= 0.5)
+					{
+						XnPoint3D pt;
+						pt = joint.position;
+						depthGenerator.ConvertRealWorldToProjective(1, &pt, &pt);
+						if (!j)
+						{
+							position.first.first = pt.Y;
+							position.first.second = pt.X;
+						}
+						else
+						{
+							position.second.first = pt.Y;
+							position.second.second = pt.X;
+						}
+					}
+				}
+			positions.push_back(position);
+		}
+}
