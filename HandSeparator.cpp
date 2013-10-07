@@ -9,7 +9,7 @@ HandSeparator::HandSeparator(const Mat &depth, const Mat &image, int y, int x)
 {
 }
 
-void HandSeparator::separate(cv::Mat &result)
+bool HandSeparator::separate(cv::Mat &result)
 {
 	int y = handPositionY;
 	int x = handPositionX;
@@ -34,7 +34,7 @@ void HandSeparator::separate(cv::Mat &result)
 				tx = j;
 				mn = depth.at<unsigned short>(i, j);
 			}
-	if (mn < 500 || mn > 4000)return;
+	if (mn < 500 || mn > 4000)return false;
 	x = tx;
 	y = ty;
 	unsigned short cnDist = depth.at<unsigned short>(y, x);
@@ -61,11 +61,12 @@ void HandSeparator::separate(cv::Mat &result)
 			flags.at<uchar>(yy, xx) = 1;
 		}
 	}
-	if (xmin == inf || ymin == inf || xmax == -1 || ymax == -1){return;}
-	if ( xmax <= xmin || ymax <= ymin ) {return;}
+	if (xmin == inf || ymin == inf || xmax == -1 || ymax == -1){return false;}
+	if ( xmax <= xmin || ymax <= ymin ) {return false;}
 	Mat resImage;
 	depth.copyTo(resImage, flags);
 	resImage = resImage(Range(ymin, ymax), Range(xmin, xmax));
 	resImage *= 100;
 	resImage.copyTo(result);
+	return true;
 }

@@ -160,6 +160,15 @@ void OpenNIContext::getImageMap(cv::Mat &image)
 	cv::cvtColor( imgBuf, image, CV_RGB2BGR );
 }
 
+void OpenNIContext::getDepthMap(cv::Mat &depth)
+{
+	xn::DepthMetaData depthMD;
+	depthGenerator.GetMetaData(depthMD);
+	depth = cv::Mat( depthMD.YRes(), depthMD.XRes(), CV_16UC1 );
+	const XnDepthPixel* pDepthMap = depthMD.Data();
+	memcpy( depth.data, pDepthMap, depthMD.YRes() * depthMD.XRes()*sizeof(XnDepthPixel) );
+}
+
 void OpenNIContext::getHandsPositions(std::vector<std::pair<std::pair<int, int>, std::pair<int, int> > > &positions)
 {
 	XnUserID aUsers[15];

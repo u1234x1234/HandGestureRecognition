@@ -6,8 +6,8 @@
 class HandSeparator
 {
 public:
-	HandSeparator(const cv::Mat &, const cv::Mat&, int y, int x);
-	void separate(cv::Mat &result);
+	HandSeparator(const cv::Mat &depth, const cv::Mat &image, int y, int x);
+	bool separate(cv::Mat &result);
 private:
 	cv::Mat depth;
 	cv::Mat image;

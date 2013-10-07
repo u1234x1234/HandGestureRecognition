@@ -1,5 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include <OpenNIContext.h>
+#include "HandSeparator.h"
+
 using namespace std;
 using namespace cv;
 CvSVM svmRight;
@@ -26,10 +28,18 @@ int main(int argc, char **argv)
 		context->display();
 		Mat a;
 		context->getImageMap(a);
+		Mat b;
+		context->getDepthMap(b);
 		vector<pair<pair<int, int>, pair<int,int> > > p;
 		context->getHandsPositions(p);
 		for (int i = 0; i < p.size(); i++)
+		{
 			circle(a, Point(p[i].second.second, p[i].second.first), 30, Scalar(250, 50, 50), 5 );
+			Mat c;
+			HandSeparator asd(b, a, p[i].second.first, p[i].second.second);
+			if (asd.separate(c))
+				imshow("hand", c);
+		}
 		imshow("image", a);
 	}
 }
