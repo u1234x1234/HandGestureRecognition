@@ -9,13 +9,15 @@ SOURCES += main.cpp \
     SceneDrawer.cpp \
     OpenNIContext.cpp \
     HandGestureRecognizer.cpp \
-    HandSeparator.cpp
+    HandSeparator.cpp \
+    RotationGesture.cpp
 
 HEADERS += \
 	SceneDrawer.h \
     OpenNIContext.h \
     HandGestureRecognizer.h \
-    HandSeparator.h
+    HandSeparator.h \
+    RotationGesture.h
 
 OTHER_FILES +=
 
