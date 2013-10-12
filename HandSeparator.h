@@ -7,12 +7,14 @@ class HandSeparator
 {
 public:
 	HandSeparator(const cv::Mat &depth, const cv::Mat &image, int y, int x);
-	bool separate(cv::Mat &result);
+	bool separate(int &yMin, int &yMax, int &xMin, int &xMax);
+	bool separate(cv::Mat &dest);
 private:
 	cv::Mat depth;
 	cv::Mat image;
 	int handPositionX;
 	int handPositionY;
+	cv::Mat resImage;
 };
 
 #endif // HANDSEPARATOR_H

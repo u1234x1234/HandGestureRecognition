@@ -9,7 +9,7 @@ HandSeparator::HandSeparator(const Mat &depth, const Mat &image, int y, int x)
 {
 }
 
-bool HandSeparator::separate(cv::Mat &result)
+bool HandSeparator::separate(int &yMin, int &yMax, int &xMin, int &xMax)
 {
 	int y = handPositionY;
 	int x = handPositionX;
@@ -40,16 +40,16 @@ bool HandSeparator::separate(cv::Mat &result)
 	unsigned short cnDist = depth.at<unsigned short>(y, x);
 	unsigned short threshold = 100;
 	flags.at<uchar>(y, x) = 1;
-	int xmax = -1, xmin = inf, ymax = -1, ymin = inf;
+	xMax = -1, xMin = inf, yMax = -1, yMin = inf;
 	while (!q.empty())
 	{
 		pair<int,int> t = q.front();
 		q.pop();
-		xmax = max(xmax, t.second);
-		xmin = min(xmin, t.second);
+		xMax = max(xMax, t.second);
+		xMin = min(xMin, t.second);
 
-		ymax = max(ymax, t.first);
-		ymin = min(ymin, t.first);
+		yMax = max(yMax, t.first);
+		yMin = min(yMin, t.first);
 		for (int i = 0; i < 4; i++)
 		{
 			xx = t.second + dx[i];
@@ -61,12 +61,22 @@ bool HandSeparator::separate(cv::Mat &result)
 			flags.at<uchar>(yy, xx) = 1;
 		}
 	}
-	if (xmin == inf || ymin == inf || xmax == -1 || ymax == -1){return false;}
-	if ( xmax <= xmin || ymax <= ymin ) {return false;}
-	Mat resImage;
+	if (xMin == inf || yMin == inf || xMax == -1 || yMax == -1){return false;}
+	if ( xMax <= xMin || yMax <= yMin ) {return false;}
 	depth.copyTo(resImage, flags);
-	resImage = resImage(Range(ymin, ymax), Range(xmin, xmax));
-	resImage *= 100;
-	resImage.copyTo(result);
 	return true;
+}
+
+bool HandSeparator::separate(Mat &dest)
+{
+	int yMin, yMax, xMin, xMax;
+	if ( separate(yMin, yMax, xMin, xMax) )
+	{
+		resImage = resImage(Range(yMin, yMax), Range(xMin, xMax));
+		resImage *= 100;
+		resImage.copyTo(dest);
+		return true;
+	}
+	else
+		return false;
 }
