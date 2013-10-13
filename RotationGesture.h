@@ -3,14 +3,24 @@
 
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include <ctime>
+#include <deque>
 
 class RotationGesture
 {
 public:
-	RotationGesture(cv::Mat &src);
-	void findFingers(std::vector<std::pair<int, int> > &fingerPositions);
+	RotationGesture();
+	void addFrame(cv::Mat &src);
+	void predict(int &result);
 private:
+	void findFingers(std::vector<std::pair<int, int> > &fingerPositions);
 	cv::Mat depthMap;
+	std::deque<int> d;
+	std::deque<double> angles;
+	clock_t timeOfLastGesture;
+	const int fingersThreshhold = 30;
+	int volume;
+	int dir;
 };
 
 #endif // ROTATIONGESTURE_H
