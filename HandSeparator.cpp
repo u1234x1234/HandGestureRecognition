@@ -4,8 +4,8 @@
 using namespace cv;
 using namespace std;
 
-HandSeparator::HandSeparator(const Mat &depth, const Mat &image, int y, int x)
-	:depth(depth), image(image), handPositionY(y), handPositionX(x)
+HandSeparator::HandSeparator(const Mat &depth, const Mat &image, int y, int x, Point torso)
+	:depth(depth), image(image), handPositionY(y), handPositionX(x),torso(torso)
 {
 }
 
@@ -13,6 +13,8 @@ bool HandSeparator::separate(int &yMin, int &yMax, int &xMin, int &xMax)
 {
 	int y = handPositionY;
 	int x = handPositionX;
+	if (abs(depth.at<unsigned short>(y, x) - depth.at<unsigned short>(torso.y, torso.x)) < 200)
+		return false;
 	queue<pair<int,int> > q;
 	Mat flags = Mat::zeros(480, 640, CV_8UC1);
 	q.push(make_pair(y, x));

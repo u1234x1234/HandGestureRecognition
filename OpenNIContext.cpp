@@ -204,3 +204,29 @@ void OpenNIContext::getHandsPositions(std::vector<std::pair<std::pair<int, int>,
 			positions.push_back(position);
 		}
 }
+
+void OpenNIContext::getHeadsPositions(std::vector<std::pair<int, int> > &positions)
+{
+	XnUserID aUsers[15];
+	XnUInt16 nUsers = 15;
+	userGenerator.GetUsers(aUsers, nUsers);
+	for (int i = 0; i < nUsers; ++i)
+		if (userGenerator.GetSkeletonCap().IsTracking(aUsers[i]))
+		{
+			pair<int, int> position;
+			if (userGenerator.GetSkeletonCap().IsJointActive(XN_SKEL_NECK))
+			{
+				XnSkeletonJointPosition joint;
+				userGenerator.GetSkeletonCap().GetSkeletonJointPosition(aUsers[i], XN_SKEL_NECK, joint);
+				if (joint.fConfidence >= 0.5)
+				{
+					XnPoint3D pt;
+					pt = joint.position;
+					depthGenerator.ConvertRealWorldToProjective(1, &pt, &pt);
+					position.first = pt.Y;
+					position.second = pt.X;
+				}
+			}
+			positions.push_back(position);
+		}
+}

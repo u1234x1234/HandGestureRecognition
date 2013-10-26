@@ -12,15 +12,18 @@ public:
 	RotationGesture();
 	void addFrame(cv::Mat &src);
 	void predict(int &result);
+	void clear();
 private:
 	void findFingers(std::vector<std::pair<int, int> > &fingerPositions);
 	cv::Mat depthMap;
 	std::deque<int> d;
 	std::deque<double> angles;
 	clock_t timeOfLastGesture;
-	const int fingersThreshhold = 30;
+	const int fingersThreshhold = 35;
 	int volume;
 	int dir;
+	int cnt;
+	int fix;
 };
 
 #endif // ROTATIONGESTURE_H

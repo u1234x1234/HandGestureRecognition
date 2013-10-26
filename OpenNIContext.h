@@ -17,6 +17,7 @@ public:
 	void getImageMap(cv::Mat &image);
 	void getDepthMap(cv::Mat &depth);
 	void getHandsPositions(std::vector<std::pair<std::pair<int, int>, std::pair<int, int> > > &); // vector of users hands, left - first, right - second.
+	void getHeadsPositions(std::vector<std::pair<int,int> > &);
 private:
 	SceneDrawer *sceneDrawer;
 	xn::Context context;
